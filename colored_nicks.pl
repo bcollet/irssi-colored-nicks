@@ -102,14 +102,9 @@ sub create_color_command_code
 sub create_irssi_nick
 {
     my $nick = $_[0];
-    my $attr = $_[1];
-    my $truncation = $_[2];
+    my $truncation = $_[1];
 
     my $len = nick_length($nick);
-    if($attr)
-    {
-        $len += nick_length($attr);
-    }
 
     # Hash the color before modifying nick.
     my $color = simple_hash_color($nick);
@@ -120,22 +115,11 @@ sub create_irssi_nick
     {
         while($len > $truncation)
         {
-            if(length($attr) > 1)
-            {
-                chop($attr);
-            }
-            else
-            {
-                chop($nick);
-            }
+            chop($nick);
             --$len;
         }
     }
 
-    if($attr)
-    {
-        return $format . $nick . create_color_command_code('%K') . $attr;
-    }
     return $format . $nick;
 }
 
@@ -147,14 +131,9 @@ sub create_irssi_nick
 sub create_padding
 {
     my $nick = $_[0];
-    my $attr = $_[1];
-    my $truncation = $_[2];
+    my $truncation = $_[1];
 
     my $len = nick_length($nick);
-    if($attr)
-    {
-        $len += nick_length($attr);
-    }
 
     my $ret = '';
     if($truncation > 0)
@@ -166,20 +145,6 @@ sub create_padding
         }
     }
     return $ret;
-}
-
-# Extracts attribution information from the message.
-# \param 0 Nick.
-# \return Tuple of (nickname part, attribution part).
-sub extract_attribution
-{
-    my $nick = $_[0];
-    Encode::_utf8_on($nick);
-
-    # Split nickname from boundary of allowed IRC nickname characters.
-    # Non-breakable space and zero-width space are valid characters.
-    $nick =~ /^([\w\s\|\^_`\-\{\}\[\]\\\x{00A0}\x{200B}\x{202F}]+)(.*)$/;
-    return ($1, $2);
 }
 
 # Calculates djb2 hash over an array.
@@ -353,11 +318,10 @@ sub cmd_cn_test
 # \param 4 ???
 sub signal_cn_private
 {
-    my ($server, $param1, $input_nick, $param3, $param4) = @_;
-    my ($nick, $attr) = extract_attribution($input_nick);
+    my ($server, undef, $nick, undef, undef) = @_;
     my $truncation_long = Irssi::settings_get_int('colored_nicks_truncation_long');
-    $expando_cnnick = create_irssi_nick($nick, $attr, $truncation_long);
-    $expando_cnpadl = create_padding($nick, $attr, $truncation_long);
+    $expando_cnnick = create_irssi_nick($nick, $truncation_long);
+    $expando_cnpadl = create_padding($nick, $truncation_long);
     $expando_cnpads = '';
     $expando_cnuser = '';
 }
@@ -370,13 +334,12 @@ sub signal_cn_private
 # \param 4 ???
 sub signal_cn_public
 {
-    my ($server, $param1, $input_nick, $param3, $param4) = @_;
-    my ($nick, $attr) = extract_attribution($input_nick);
+    my ($server, undef, $nick, undef, undef) = @_;
     my $truncation_long = Irssi::settings_get_int('colored_nicks_truncation_long');
     my $truncation_short = Irssi::settings_get_int('colored_nicks_truncation_short');
-    $expando_cnnick = create_irssi_nick($nick, $attr, $truncation_long);
-    $expando_cnpadl = create_padding($nick, $attr, $truncation_long);
-    $expando_cnpads = create_padding($nick, $attr, $truncation_short);
+    $expando_cnnick = create_irssi_nick($nick, $truncation_long);
+    $expando_cnpadl = create_padding($nick, $truncation_long);
+    $expando_cnpads = create_padding($nick, $truncation_short);
     $expando_cnuser = '';
 }
 
@@ -386,7 +349,7 @@ sub signal_cn_public
 # \param 2 ???
 sub signal_cn_own_public
 {
-    my ($server, $param1, $param2) = @_;
+    my ($server, undef, undef) = @_;
     my $truncation_long = Irssi::settings_get_int('colored_nicks_truncation_long');
     $expando_cnnick = '';
     $expando_cnpadl = create_padding($server->{nick}, '', $truncation_long);
@@ -402,11 +365,10 @@ sub signal_cn_own_public
 # \param 4 ???
 sub signal_cn_own_private
 {
-    my ($server, $param1, $input_nick, $param3) = @_;
-    my ($nick, $attr) = extract_attribution($input_nick);
+    my ($server, undef, $nick, undef) = @_;
     my $truncation_long = Irssi::settings_get_int('colored_nicks_truncation_long');
-    $expando_cnnick = create_irssi_nick($nick, $attr, $truncation_long);
-    $expando_cnpadl = create_padding($nick, $attr, $truncation_long);
+    $expando_cnnick = create_irssi_nick($nick, $truncation_long);
+    $expando_cnpadl = create_padding($nick, $truncation_long);
     $expando_cnpads = create_padding($server->{nick}, '', $truncation_long);
     $expando_cnuser = create_irssi_nick($server->{nick}, '', $truncation_long);
 }
